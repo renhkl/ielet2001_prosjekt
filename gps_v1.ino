@@ -44,3 +44,17 @@ void loop() {
     }
   }
 }
+
+
+
+// Ekstra funksjonalitet
+void gpstime() {
+  int hour = GPS.hour;
+  int minute = GPS.minute;
+  int second = GPS.seconds;
+  int millisec = GPS.milliseconds;
+
+  int day = GPS.day;
+  int month = GPS.month;
+  int year = GPS.year;
+}
