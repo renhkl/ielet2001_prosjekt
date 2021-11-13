@@ -37,7 +37,12 @@ void loop() {
       float x = GPS.longitude;
       float y = GPS.latitude;
 
-      // 
+      // Her kommer hovedfunksjonaliteten med koordinater
+
+      Serial.println(" ");
+      Serial.print("x: "); Serial.print(x);
+      Serial.print("   y: "); Serial.print(y);
+      Serial.println(" ");
     }
     else { // Hvis det ikke er GPS-signal
       Serial.println("...");
