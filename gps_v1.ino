@@ -1,3 +1,20 @@
+#include "UbidotsEsp32Mqtt.h"
+
+const char *UBIDOTS_TOKEN = "BBFF-SlqcWJr8JGxZtsEHP4WZG9iB4fPOha";  // Put here your Ubidots TOKEN
+const char *WIFI_SSID = "Shady nettverk";      // Put here your Wi-Fi SSID
+const char *WIFI_PASS = "heiheihei";      // Put here your Wi-Fi password
+const char *DEVICE_LABEL = "esp32gps";   // Put here your Device label to which data  will be published
+const char *VARIABLE_LABEL = "pos"; // Put here your Variable label to which data  will be published
+
+const int PUBLISH_FREQUENCY = 5000; // Update rate in milliseconds
+
+unsigned long timer;
+
+float latitude = 1.25164;
+float longitude = -77.28426;
+
+Ubidots ubidots(UBIDOTS_TOKEN);
+
 #include <HardwareSerial.h>
 #include <Adafruit_GPS.h>
 
@@ -6,60 +23,19 @@ Adafruit_GPS GPS(&GPSSerial);
 
 #define GPSECHO false
 
-uint32_t timer = millis();
-
-
 void setup() {
-  while (!Serial);
   Serial.begin(115200);
-  GPS.begin(9600);
-  GPS.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCGGA);
-  GPS.sendCommand(PMTK_SET_NMEA_UPDATE_1HZ);
-  //GPS.sendCommand(PGCMD_ANTENNA);
-
   delay(1000);
+  Serial.println("Adafruit GPS logging start test!");
+
+  // 9600 NMEA is the default baud rate for MTK - some use 4800
+  GPS.begin(9600);
+
+    
+
 }
 
 void loop() {
-  char c = GPS.read(); // Henter GPS-data
+  // put your main code here, to run repeatedly:
 
-  // Parser GPS-data
-  if (GPS.newNMEAreceived()) {
-    Serial.print(GPS.lastNMEA());
-    if (!GPS.parse(GPS.lastNMEA()))
-      return;
-  }
-
-
-  if (millis() - timer > 5000) { // Kjører hvert femte sekund
-    timer = millis(); // Resetter timer
-    if (GPS.fix) { // Hvis det er GPS-signal
-      float x = GPS.longitude;
-      float y = GPS.latitude;
-
-      // Her kommer hovedfunksjonaliteten med koordinater
-
-      Serial.println(" ");
-      Serial.print("x: "); Serial.print(x);
-      Serial.print("   y: "); Serial.print(y);
-      Serial.println(" ");
-    }
-    else { // Hvis det ikke er GPS-signal
-      Serial.println("...");
-    }
-  }
-}
-
-
-
-// Ekstra funksjonalitet
-void gpstime() {
-  int hour = GPS.hour;
-  int minute = GPS.minute;
-  int second = GPS.seconds;
-  int millisec = GPS.milliseconds;
-
-  int day = GPS.day;
-  int month = GPS.month;
-  int year = GPS.year;
 }
