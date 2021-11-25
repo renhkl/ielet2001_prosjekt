@@ -1,0 +1,14 @@
+tzapu/WiFiManager
+https://github.com/tzapu/WiFiManager
+
+zhouhan0126/DNSServer---esp32 
+https://github.com/zhouhan0126/DNSServer---esp32
+
+zhouhan0126/WebServer-esp32
+https://github.com/zhouhan0126/WebServer-esp32
+
+adafruit/Adafruit_GPS
+https://github.com/adafruit/Adafruit_GPS
+
+ubidots/esp32-mqtt
+https://github.com/ubidots/esp32-mqtt
