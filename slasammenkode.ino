@@ -244,7 +244,7 @@ void setup()
 
 
   
-  //ubidots.connectToWifi(WIFI_SSID, WIFI_PASS);
+  ubidots.connectToWifi(WIFI_SSID, WIFI_PASS);
   ubidots.setCallback(callback);
   ubidots.setup();
   ubidots.reconnect();
