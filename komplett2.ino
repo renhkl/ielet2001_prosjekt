@@ -1,14 +1,3 @@
-/******************************************
- *
- * This example works for both Industrial and STEM users.
- *
- * Developed by Jose Garcia, https://github.com/jotathebest/
- *
- * ****************************************/
-
-/****************************************
- * Include Libraries
- ****************************************/
 #include "UbidotsEsp32Mqtt.h"
 #include "vector"
 
@@ -255,7 +244,10 @@ void setup()
   wm.setConfigPortalBlocking(false);
   if(wm.autoConnect(WIFI_SSID, WIFI_PASS)){
       Serial.println("Connected to WiFi on setup");
-      if(ubidots.connectToWifi(WIFI_SSID, WIFI_PASS)){
+      ubidots.connectToWifi(WIFI_SSID, WIFI_PASS);
+      ubidots.reconnect();
+      delay(100);
+      if (ubidots.connected()){
           Serial.println("Connected to Ubidots on setup");
       }
   }
