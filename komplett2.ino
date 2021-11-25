@@ -254,14 +254,15 @@ void setup()
 
   wm.setConfigPortalBlocking(false);
   if(wm.autoConnect(WIFI_SSID, WIFI_PASS)){
-      Serial.println("Connected on setup");
-      ubidots.connectToWifi(WIFI_SSID, WIFI_PASS);
+      Serial.println("Connected to WiFi on setup");
+      if(ubidots.connectToWifi(WIFI_SSID, WIFI_PASS)){
+          Serial.println("Connected to Ubidots on setup");
+      }
   }
   else {
       Serial.println("Configportal running");
   }
-  
-  //ubidots.connectToWifi(WIFI_SSID, WIFI_PASS);
+    
   ubidots.setCallback(callback);
   ubidots.setup();
   ubidots.reconnect();
@@ -278,8 +279,7 @@ void setup()
 void loop()
 {
   // put your main code here, to run repeatedly:
-  if (!ubidots.connected())
-  {
+  if ((!ubidots.connected()) && (WiFi.status()== WL_CONNECTED)){
     ubidots.reconnect();
   }
 
