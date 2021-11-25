@@ -57,13 +57,6 @@ void callback(char *topic, byte *payload, unsigned int length)
 void loop() {
   char c = GPS.read(); // Henter GPS-data
 
-  // Parser GPS-data
-  if (GPS.newNMEAreceived()) {
-    Serial.print(GPS.lastNMEA());
-    if (!GPS.parse(GPS.lastNMEA()))
-      return;
-  }
-
   if (!ubidots.connected())
   {
     ubidots.reconnect();
@@ -75,16 +68,18 @@ void loop() {
     char* str_lng = (char*)malloc(sizeof(char) * 10);
     //char str_lat,str_lng,context;
 
+    // Parser GPS-data
+    if (GPS.newNMEAreceived()) {
+      Serial.print(GPS.lastNMEA());
+      if (!GPS.parse(GPS.lastNMEA()))
+        return;
+    }
+    
     if (GPS.fix) { // Hvis det er GPS-signal
       longitude = GPS.longitude;
       latitude = GPS.latitude;
-
-      // Her kommer hovedfunksjonaliteten med koordinater
-
-      Serial.println(" ");
-      Serial.print("Longitude: "); Serial.print(longitude);
-      Serial.print("   Latitude: "); Serial.print(latitude);
-      Serial.println(" ");
+      Serial.println(" "); Serial.print("Longitude: "); Serial.print(longitude);
+      Serial.print("   Latitude: "); Serial.print(latitude); Serial.println(" ");
     }
     else { // Hvis det ikke er GPS-signal
       Serial.println("...");
