@@ -19,8 +19,8 @@
  * Define Constants
  ****************************************/
 const char *UBIDOTS_TOKEN = "BBFF-nKvPfwxPTDAW1eoBkh6Nxpi4hQbaed";  // Put here your Ubidots TOKEN
-const char *WIFI_SSID = "";      // Put here your Wi-Fi SSID
-const char *WIFI_PASS = "";      // Put here your Wi-Fi password
+const char *WIFI_SSID = "fisker-2G";      // Put here your Wi-Fi SSID
+const char *WIFI_PASS = "Frosta1932";      // Put here your Wi-Fi password
 const char *DEVICE_LABEL = "test";   // Put here your Device label to which data  will be published
 const char *VARIABLE_LABEL = "gps"; // Put here your Variable label to which data  will be published
 const char *SUBSCRIBE_DEVICE_LABEL = "maptrace";
@@ -45,8 +45,8 @@ int longitudesLength;
 //std::vector<double> longitudes = {4.8369455,4.8403573};
 std::vector<double> latitudes = {};
 std::vector<double> longitudes = {};
-
-
+int intervals; //hvor mange intervaller det er, altså hvor mange koordinater.
+int interval = 0; //hvilket intervall man er i nå.
 Ubidots ubidots(UBIDOTS_TOKEN);
 
 #define GPSSerial Serial2 // RX - IO17; TX - IO16
@@ -120,9 +120,7 @@ double findDistance(double x0, double y0, double x1, double y1,double x2, double
   return(t/n);
 }
 
-void findInterval(){ 
-  
-}
+
 void getLatitude(){ /*henter nye variabler hvis verdi fra ubidots er annerledes fra verdi på esp32*/
     getLat = 1;
     getLong = 0;
@@ -229,6 +227,13 @@ void getCoordinatesUbidots(){
     }    
   }
 }
+void checkInterval(double x0,double y0,double x1,double y1){ //denne funksjonen sjekker om man skal til neste intervall eller ikke. Tar 2 punkter 
+double criticalDistance = 0.0001; //11 meter hvor langt unna man skal være en koordinat før man begynner på "neste" intervall 
+double distance = sqrt(pow((x0-x1),2) + pow((y0-y1),2)); //formel for distanse mellom 2 punkter
+  if(distance < criticalDistance){
+    interval++;
+  }
+}
 void setup()
 {
   // put your setup code here, to run once:
@@ -243,7 +248,6 @@ void setup()
   GPS.sendCommand(PMTK_SET_NMEA_UPDATE_1HZ);
 
 
-  
   ubidots.connectToWifi(WIFI_SSID, WIFI_PASS);
   ubidots.setCallback(callback);
   ubidots.setup();
@@ -258,8 +262,7 @@ void setup()
   //getCoordinatesUbidots(); //henter maptrace koordinater fra ubidots
 }
 
-void loop()
-{
+void loop(){
   // put your main code here, to run repeatedly:
   if (!ubidots.connected())
   {
@@ -306,6 +309,12 @@ void loop()
 
     ubidots.add(VARIABLE_LABEL, 1, context); 
     ubidots.publish(DEVICE_LABEL);
+
+    if(findDistance(latitudeGPS,longitudeGPS,latitudes[interval],longitudes[interval],latitudes[interval+1],longitudes[interval+1]) > 0.001){ //sjekker distansen fra en linje mellom 2 punkter er større en 0.001 koordinater
+      //make alarm sound
+      //maybe send something to ubidots
+    }
+    checkInterval(latitudeGPS,longitudeGPS,latitudes[interval+1],longitudes[interval+1]); //sjekker om man skal gå til neste intervall
     timerGPS = millis();
   }
 
