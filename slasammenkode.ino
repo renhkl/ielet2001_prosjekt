@@ -33,6 +33,28 @@ const int TIMEOUT = 10000;
 unsigned long timer,timer2,timerGPS;
 uint8_t analogPin = 34; // Pin used to read data from GPIO34 ADC_CH6.
 
+// tid
+unsigned long time_now = 0;
+unsigned long time_before =0; 
+float periode = 0; 
+
+// buzzer 
+const int freq = 500;      // frekvens på lyd
+const int buzzerpin = 26;  // pin i bruk for buzzer 
+const int channel = 0;   
+
+// sensor 
+const int trigPin = 5;    // pin i bruk for trigPin
+const int echoPin = 18;   // pin i bruk for echoPin 
+float startwarning = 20;  // avstand den begynner å varsle på (i cm)
+long duration;            
+float distanceCm;
+#define SOUND_SPEED 0.034
+
+// knapp 
+#define button 33
+int state = 1; 
+
 double latitudeGPS = 1.25164;
 double longitudeGPS = -77.28426;
 
@@ -234,6 +256,48 @@ double distance = sqrt(pow((x0-x1),2) + pow((y0-y1),2)); //formel for distanse m
     interval++;
   }
 }
+
+void sensorgobeep()
+{
+    time_now = millis();   // setter time_now til tiden nå 
+
+    // Clears the trigPin
+    digitalWrite(trigPin, LOW);
+    delayMicroseconds(2);
+    // Sets the trigPin on HIGH state for 10 micro seconds
+    digitalWrite(trigPin, HIGH);
+    delayMicroseconds(10);
+    digitalWrite(trigPin, LOW);
+
+    // Reads the echoPin, returns the sound wave travel time in microseconds
+    duration = pulseIn(echoPin, HIGH);
+
+    // Calculate the distance
+    distanceCm = duration * SOUND_SPEED/2;
+    Serial.println(distanceCm);
+
+    periode = distanceCm * 15;
+
+    if (time_now >  time_before + periode && distanceCm < startwarning)  // om det har gått lengre tid enn avstand multiplisert med 15 og mindre enn "x"
+    {
+      if (distanceCm < 4)
+      {
+      ledcWriteTone(channel, freq);
+      }
+      else
+      {
+      //buzzer goess peepepeeepeeeep 
+      ledcWriteTone (channel, freq);
+      delay(50);
+      ledcWriteTone(channel, 0);
+      time_before = millis();
+      }
+    }
+    else if (distanceCm > startwarning)
+    {
+      ledcWriteTone(channel, 0);
+    } 
+}
 void setup()
 {
   // put your setup code here, to run once:
@@ -241,6 +305,11 @@ void setup()
   // ubidots.setDebug(true);  // uncomment this to make debug messages available
   
   // 9600 NMEA is the default baud rate for MTK - some use 4800
+
+  pinMode(trigPin, OUTPUT); // setter  trigPin som en Output
+  pinMode(echoPin, INPUT);  // setter  echoPin som en Input
+  pinMode(button,INPUT_PULLUP);
+  ledcAttachPin(buzzerpin, channel); // buzzer 
 
   GPS.begin(9600);
 
@@ -310,14 +379,33 @@ void loop(){
     ubidots.add(VARIABLE_LABEL, 1, context); 
     ubidots.publish(DEVICE_LABEL);
 
-    if(findDistance(latitudeGPS,longitudeGPS,latitudes[interval],longitudes[interval],latitudes[interval+1],longitudes[interval+1]) > 0.001){ //sjekker distansen fra en linje mellom 2 punkter er større en 0.001 koordinater
+    /*if(findDistance(latitudeGPS,longitudeGPS,latitudes[interval],longitudes[interval],latitudes[interval+1],longitudes[interval+1]) > 0.001){ //sjekker distansen fra en linje mellom 2 punkter er større en 0.001 koordinater
       //make alarm sound
       //maybe send something to ubidots
-    }
-    checkInterval(latitudeGPS,longitudeGPS,latitudes[interval+1],longitudes[interval+1]); //sjekker om man skal gå til neste intervall
+    }*/
+    //checkInterval(latitudeGPS,longitudeGPS,latitudes[interval+1],longitudes[interval+1]); //sjekker om man skal gå til neste intervall
     timerGPS = millis();
   }
+  if (digitalRead(button) == 0)  // en enkel "touchknapp for test"
+  {
+    delay (500);
+    if (state == state)
+    {
+      state = !state;
+    }
+    else if (state = !state)
+    {
+      state = state; 
+    }
+    
 
+  }
+
+  if (state == 0)
+  { 
+    sensorgobeep();
+    delay(100);
+  }
 
   /*if (abs(millis() - timer) > PUBLISH_FREQUENCY) // triggers the routine every 5 seconds
   {/* Reserves memory to store context key values, add as much as you need */
