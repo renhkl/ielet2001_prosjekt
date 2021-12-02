@@ -57,16 +57,18 @@ int state = 1;
 
 double latitudeGPS = 1.25164;
 double longitudeGPS = -77.28426;
+//double latitudeGPS;
+//double longitudeGPS;
 
 bool getLat,getLong;
 bool switchh = 1;
 
 int longitudesLength;
 
-//std::vector<double> latitudes = {45.7519089,45.7561908,4.8427391,45.7553674,45.7507560,45.7481656};
-//std::vector<double> longitudes = {4.8369455,4.8403573};
-std::vector<double> latitudes = {};
-std::vector<double> longitudes = {};
+std::vector<double> latitudes = {45.7519089,45.7561908,45.7553674,45.7507560,45.7481656,45.7466084,45.7490491};
+std::vector<double> longitudes = {4.8369455,4.8403573,4.8427391,4.8395634,4.8436189,4.8427606,4.8361087};
+//std::vector<double> latitudes = {};
+//std::vector<double> longitudes = {};
 int intervals; //hvor mange intervaller det er, altså hvor mange koordinater.
 int interval = 0; //hvilket intervall man er i nå.
 Ubidots ubidots(UBIDOTS_TOKEN);
@@ -190,7 +192,7 @@ std::vector<double> cleanVector(std::vector<double> x){ //I visse tilfeller havn
     }
   return x;
 }
-void getCoordinatesUbidots(){
+void getCoordinatesUbidots(){ //henter koordinater fra ubidots, må kjøres synkront med et python skript som sender de valgte "waypoints" til ubidots.
   bool getCoordinates = true;
 
   while(getCoordinates == true){
@@ -331,11 +333,6 @@ void setup()
   //getCoordinatesUbidots(); //henter maptrace koordinater fra ubidots
 }
 
-float decimalDegrees(float nmeaCoordinate) {
-  uint16_t wholeDegrees = 0.01*nmeaCoordinate;
-  return wholeDegrees + (nmeaCoordinates - 100.0*wholeDegrees)/60.0;
-}
-
 void loop(){
   // put your main code here, to run repeatedly:
   if (!ubidots.connected())
@@ -360,42 +357,40 @@ void loop(){
     if (GPS.fix) { // Hvis det er GPS-signal
       longitudeGPS = GPS.longitude;
       latitudeGPS = GPS.latitude;
-        
-      // Konflikt med datatyper?
-      //longitudeGPS = decimalDegrees(longitudeGPS);
-      //latitudeGPS = decimalDegrees(latitudeGPS);
-      
       Serial.println(" "); Serial.print("Longitude: "); Serial.print(longitudeGPS);
       Serial.print("   Latitude: "); Serial.print(latitudeGPS); Serial.println(" ");
     }
     else { // Hvis det ikke er GPS-signal
       Serial.println("No fix");
     }
-
+    Serial.println("0");
     /* Saves the coordinates as char */
     sprintf(str_lat, "%f", latitudeGPS);
     sprintf(str_lng, "%f", longitudeGPS);
-
+    Serial.println("1");
     /* Reserves memory to store context array */
     char* context = (char*)malloc(sizeof(char) * 30);
-
+    Serial.println("2");
     /* Adds context key-value pairs */
     ubidots.addContext("lat", str_lat);
     ubidots.addContext("lng", str_lng);
-
+    Serial.println("3");
     /* Builds the context with the coordinates to send to Ubidots */
     ubidots.getContext(context);
-
+    Serial.println("4");
     ubidots.add(VARIABLE_LABEL, 1, context); 
     ubidots.publish(DEVICE_LABEL);
-
-    /*if(findDistance(latitudeGPS,longitudeGPS,latitudes[interval],longitudes[interval],latitudes[interval+1],longitudes[interval+1]) > 0.001){ //sjekker distansen fra en linje mellom 2 punkter er større en 0.001 koordinater
+    Serial.println("5");
+    if(findDistance(latitudeGPS,longitudeGPS,latitudes[interval],longitudes[interval],latitudes[interval+1],longitudes[interval+1]) > 0.001){ //sjekker distansen fra en linje mellom 2 punkter er større en 0.001 koordinater
       //make alarm sound
       //maybe send something to ubidots
-    }*/
-    //checkInterval(latitudeGPS,longitudeGPS,latitudes[interval+1],longitudes[interval+1]); //sjekker om man skal gå til neste intervall
+    }
+    Serial.println("6");
+    checkInterval(latitudeGPS,longitudeGPS,latitudes[interval+1],longitudes[interval+1]); //sjekker om man skal gå til neste intervall
     timerGPS = millis();
+    Serial.println("7");
   }
+  
   if (digitalRead(button) == 0)  // en enkel "touchknapp for test"
   {
     delay (500);
@@ -408,7 +403,6 @@ void loop(){
       state = state; 
     }
     
-
   }
 
   if (state == 0)
@@ -416,7 +410,6 @@ void loop(){
     sensorgobeep();
     delay(100);
   }
-
   /*if (abs(millis() - timer) > PUBLISH_FREQUENCY) // triggers the routine every 5 seconds
   {/* Reserves memory to store context key values, add as much as you need */
     //char* str_lat = (char*)malloc(sizeof(char) * 10);
@@ -492,7 +485,6 @@ void loop(){
      timer2 = millis();
       longitudesLength = longitudes.size();
     }*/
-
   ubidots.loop();
 
 
