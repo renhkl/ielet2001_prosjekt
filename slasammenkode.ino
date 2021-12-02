@@ -361,8 +361,9 @@ void loop(){
       longitudeGPS = GPS.longitude;
       latitudeGPS = GPS.latitude;
         
-      //longitudeGPS = decimalDegrees();
-      //latitudeGPS = decimalDegrees();
+      // Konflikt med datatyper?
+      //longitudeGPS = decimalDegrees(longitudeGPS);
+      //latitudeGPS = decimalDegrees(latitudeGPS);
       
       Serial.println(" "); Serial.print("Longitude: "); Serial.print(longitudeGPS);
       Serial.print("   Latitude: "); Serial.print(latitudeGPS); Serial.println(" ");
