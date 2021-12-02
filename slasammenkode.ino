@@ -331,6 +331,11 @@ void setup()
   //getCoordinatesUbidots(); //henter maptrace koordinater fra ubidots
 }
 
+float decimalDegrees(float nmeaCoordinate) {
+  uint16_t wholeDegrees = 0.01*nmeaCoordinate;
+  return wholeDegrees + (nmeaCoordinates - 100.0*wholeDegrees)/60.0;
+}
+
 void loop(){
   // put your main code here, to run repeatedly:
   if (!ubidots.connected())
@@ -355,6 +360,10 @@ void loop(){
     if (GPS.fix) { // Hvis det er GPS-signal
       longitudeGPS = GPS.longitude;
       latitudeGPS = GPS.latitude;
+        
+      //longitudeGPS = decimalDegrees();
+      //latitudeGPS = decimalDegrees();
+      
       Serial.println(" "); Serial.print("Longitude: "); Serial.print(longitudeGPS);
       Serial.print("   Latitude: "); Serial.print(latitudeGPS); Serial.println(" ");
     }
