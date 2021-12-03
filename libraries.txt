@@ -12,3 +12,12 @@ https://github.com/adafruit/Adafruit_GPS
 
 ubidots/esp32-mqtt
 https://github.com/ubidots/esp32-mqtt
+
+
+
+
+Datasheets
+
+GPS-modul PA6H
+https://cdn-shop.adafruit.com/datasheets/GlobalTop-FGPMMOPA6H-Datasheet-V0A.pdf
+
