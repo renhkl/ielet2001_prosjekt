@@ -1,10 +1,3 @@
-/******************************************
- *
- * This example works for both Industrial and STEM users.
- *
- * Developed by Jose Garcia, https://github.com/jotathebest/
- *
- * ****************************************/
 
 /****************************************
  * Include Libraries
@@ -26,6 +19,7 @@ const char *VARIABLE_LABEL = "gps"; // Put here your Variable label to which dat
 const char *SUBSCRIBE_DEVICE_LABEL = "maptrace";
 const char *SUBSCRIBE_VARIABLE_LABEL_LAT = "latitudes";
 const char *SUBSCRIBE_VARIABLE_LABEL_LONG = "longitudes";
+const char *PUBLISH_VARIABLE_LABEL_GETCOORDINATES = "getcoordinates";
 const int PUBLISH_FREQUENCY = 3500; // Update rate in milliseconds
 const int RECONNECT_FREQUENCY = 5000; // Attempt new reconnect
 const int TIMEOUT = 10000;
@@ -55,8 +49,8 @@ float distanceCm;
 #define button 33
 int state = 1; 
 
-double latitudeGPS = 1.25164;
-double longitudeGPS = -77.28426;
+double latitudeGPS = 63.25164;
+double longitudeGPS = 10.28426;
 //double latitudeGPS;
 //double longitudeGPS;
 
@@ -65,10 +59,10 @@ bool switchh = 1;
 
 int longitudesLength;
 
-std::vector<double> latitudes = {45.7519089,45.7561908,45.7553674,45.7507560,45.7481656,45.7466084,45.7490491};
-std::vector<double> longitudes = {4.8369455,4.8403573,4.8427391,4.8395634,4.8436189,4.8427606,4.8361087};
-//std::vector<double> latitudes = {};
-//std::vector<double> longitudes = {};
+//std::vector<double> latitudes = {45.7519089,45.7561908,45.7553674,45.7507560,45.7481656,45.7466084,45.7490491};
+//std::vector<double> longitudes = {4.8369455,4.8403573,4.8427391,4.8395634,4.8436189,4.8427606,4.8361087};
+std::vector<double> latitudes = {};
+std::vector<double> longitudes = {};
 int intervals; //hvor mange intervaller det er, altså hvor mange koordinater.
 int interval = 0; //hvilket intervall man er i nå.
 Ubidots ubidots(UBIDOTS_TOKEN);
@@ -139,8 +133,8 @@ void callback(char *topic, byte *payload, unsigned int length)
 double findDistance(double x0, double y0, double x1, double y1,double x2, double y2){ 
   //bruker double for å få med alle desimalpunktene til koordinatene
   //denne funksjonen finner distansen til ett punkt(x0,y0) fra en linje definert av x1 y1 og x2 y2
-  float t = abs((x2-x1)*(y1-y0)-(x1-x0)*(y2-y1)); //teller
-  float n = sqrt(pow((x2-x1),2) + pow((y2-y1),2)); //nevner
+  double t = abs((x2-x1)*(y1-y0)-(x1-x0)*(y2-y1)); //teller
+  double n = sqrt(pow((x2-x1),2) + pow((y2-y1),2)); //nevner
   return(t/n);
 }
 
@@ -194,6 +188,9 @@ std::vector<double> cleanVector(std::vector<double> x){ //I visse tilfeller havn
 }
 void getCoordinatesUbidots(){ //henter koordinater fra ubidots, må kjøres synkront med et python skript som sender de valgte "waypoints" til ubidots.
   bool getCoordinates = true;
+  ubidots.add(PUBLISH_VARIABLE_LABEL_GETCOORDINATES,1);
+  ubidots.publish(DEVICE_LABEL);
+  sleep(3);
 
   while(getCoordinates == true){
     if (abs(millis() - timer) > PUBLISH_FREQUENCY) // triggers the routine every 5 seconds
@@ -246,14 +243,16 @@ void getCoordinatesUbidots(){ //henter koordinater fra ubidots, må kjøres synk
      }
         timer2 = millis();
         longitudesLength = longitudes.size();
-        getCoordinates = false;        
+        ubidots.add(PUBLISH_VARIABLE_LABEL_GETCOORDINATES,0);
+        ubidots.publish(DEVICE_LABEL);
+        getCoordinates = false;    
       }
     }    
   }
 }
 void checkInterval(double x0,double y0,double x1,double y1){ //denne funksjonen sjekker om man skal til neste intervall eller ikke. Tar 2 punkter 
-double criticalDistance = 0.0001; //11 meter hvor langt unna man skal være en koordinat før man begynner på "neste" intervall 
-double distance = sqrt(pow((x0-x1),2) + pow((y0-y1),2)); //formel for distanse mellom 2 punkter
+  double criticalDistance = 0.0001; //11 meter hvor langt unna man skal være en koordinat før man begynner på "neste" intervall 
+  double distance = sqrt(pow((x0-x1),2) + pow((y0-y1),2)); //formel for distanse mellom 2 punkter
   if(distance < criticalDistance){
     interval++;
   }
@@ -330,7 +329,7 @@ void setup()
 
   longitudesLength = longitudes.size();
 
-  //getCoordinatesUbidots(); //henter maptrace koordinater fra ubidots
+  getCoordinatesUbidots(); //henter maptrace koordinater fra ubidots
 }
 
 void loop(){
@@ -381,12 +380,15 @@ void loop(){
     ubidots.add(VARIABLE_LABEL, 1, context); 
     ubidots.publish(DEVICE_LABEL);
     Serial.println("5");
-    if(findDistance(latitudeGPS,longitudeGPS,latitudes[interval],longitudes[interval],latitudes[interval+1],longitudes[interval+1]) > 0.001){ //sjekker distansen fra en linje mellom 2 punkter er større en 0.001 koordinater
+    intervals = longitudes.size(); //setter intervals til lengden longitudes vector.
+    if(interval < intervals){ //sjekker om man er ferdig med løypa slik at en ikke går out of bounds
+      if(findDistance(latitudeGPS,longitudeGPS,latitudes[interval],longitudes[interval],latitudes[interval+1],longitudes[interval+1]) > 0.001){ //sjekker distansen fra en linje mellom 2 punkter er større en 0.001 koordinater
       //make alarm sound
       //maybe send something to ubidots
+      }
+      Serial.println("6");
+      checkInterval(latitudeGPS,longitudeGPS,latitudes[interval+1],longitudes[interval+1]); //sjekker om man skal gå til neste intervall
     }
-    Serial.println("6");
-    checkInterval(latitudeGPS,longitudeGPS,latitudes[interval+1],longitudes[interval+1]); //sjekker om man skal gå til neste intervall
     timerGPS = millis();
     Serial.println("7");
   }

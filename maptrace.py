@@ -8,6 +8,7 @@ Made by Jose García @https://github.com/jotathebest/
 '''
 
 import paho.mqtt.client as mqttClient
+import paho.mqtt.subscribe as subscribe
 import time
 import json
 import random
@@ -26,6 +27,10 @@ DEVICE_LABEL = "maptrace"
 VARIABLE_LABEL = "pos"
 VARIABLE_LABEL_LAT = "latitudes"
 VARIABLE_LABEL_LONG = "longitudes"
+SUBSCRIBE_DEVICE_LABEL = "test"
+SUBSCIBE_VARIABLE_LABEL = "getcoordinates"
+
+upload = False
 
 
 
@@ -47,6 +52,18 @@ def on_connect(client, userdata, flags, rc):
 def on_publish(client, userdata, result):
     print("[INFO] Published!")
 
+def print_msg(client, userdata, message):
+    payloadString = str(message.payload) #gjør om bytstreamen til in string slik at den kan indekses
+    print("%s : %s" % (message.topic, message.payload))
+    value = payloadString[12] #henter verdien som er en er interessert i
+    if(value == "1"): #hvis verdien er lik en så skal vi unsubscribe og laste opp koordinater
+        client.disconnect()
+        upload = True
+def on_message(client, userdata, message):
+    print("message received " ,str(message.payload.decode("utf-8")))
+    print("message topic=",message.topic)
+    print("message qos=",message.qos)
+    print("message retain flag=",message.retain)
 
 def connect(mqtt_client, mqtt_username, mqtt_password, broker_endpoint, port):
     global connected
@@ -99,6 +116,7 @@ def main(mqtt_client,lat,lng):
     payloadLong = json.dumps(payloadLong)
 
     topic = "{}{}".format(TOPIC, DEVICE_LABEL)
+    print(topic)
 
     if not connected:  # Connects to the broker
         connect(mqtt_client, MQTT_USERNAME, MQTT_PASSWORD,
@@ -135,10 +153,21 @@ with open('maptrace.txt') as f:
 
 print(latitudes,longitudes)
 
-if __name__ == '__main__':
-    mqtt_client = mqttClient.Client()
-    i = 0
-    while (i < len(latitudes)):
-        main(mqtt_client,latitudes[i],longitudes[i])
-        time.sleep(5)
-        i+=1
+
+mqtt_client = mqttClient.Client()
+mqtt_client.on_message=on_message
+i = 0
+if(upload == False):
+    #mqtt_client.subscribe("/v1.6/devices/test/getcoordinates")
+    time.sleep(0.1)
+    subscribe.callback(print_msg, "/v1.6/devices/test/getcoordinates", hostname="industrial.api.ubidots.com",auth = {'username':"BBFF-nKvPfwxPTDAW1eoBkh6Nxpi4hQbaed"})
+    
+    print("123")
+
+upload = True
+
+while (i < len(latitudes)):
+    main(mqtt_client,latitudes[i],longitudes[i])
+    time.sleep(5)
+    i+=1
+upload = False
